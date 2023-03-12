@@ -3,23 +3,26 @@ from PyPDF2 import PdfWriter, PdfReader
 import os
 
 
+INPUT_DIR = 'inputs'
+OUTPUT_DIR = 'output'
+
 # creating output folder if not exists
-if (not os.path.exists('output')):
-    os.mkdir('output')
+if (not os.path.exists(OUTPUT_DIR)):
+    os.mkdir(OUTPUT_DIR)
 
 # Specify the input PDF file path and the output directory path
 pdf_path = None
 
 # gettings the list of pdfs
-pdfs = [pdf for pdf in os.listdir("inputs/") if pdf.endswith(".pdf")]
+pdfs = [pdf for pdf in os.listdir(INPUT_DIR + "/") if pdf.endswith(".pdf")]
 
 for pdf in pdfs:
-    pdf_path = os.path.join("inputs", pdf)
+    pdf_path = os.path.join(INPUT_DIR, pdf)
     output_dir = ""
 
     # setting output directory for each type of pdf
-    os.mkdir(f'output/{pdf}')
-    output_dir = os.path.join("output/", pdf) + "/"
+    os.mkdir(f'{OUTPUT_DIR}/{pdf}')
+    output_dir = os.path.join(OUTPUT_DIR, pdf) + "/"
 
     # Open the PDF file and get the number of pages
     pdf_file = open(pdf_path, 'rb')
@@ -53,7 +56,7 @@ for pdf in pdfs:
         with open(output_filename, 'wb') as output_file:
             pdf_writer.write(output_file)
 
-    # Generate 3 PDF files with 1 page each for an input PDF file with 3 pages
+    # # Generate 3 PDF files with 1 page each for an input PDF file with 3 pages
     if num_pages == 3:
         for page_num in range(num_pages):
             pdf_writer = PdfWriter()
