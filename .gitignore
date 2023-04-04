@@ -4,3 +4,5 @@ test.py
 /output
 *.docx
 *.pdf
+*.png
+*.jpg
