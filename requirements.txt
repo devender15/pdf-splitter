@@ -1,2 +1,4 @@
 PyPDF2==3.0.1
 rich==12.6.0
+PyMuPDF==1.21.1
+fitz==0.0.1.dev2
