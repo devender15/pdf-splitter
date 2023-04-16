@@ -5,6 +5,9 @@ import os
 import shutil
 from rich import print as rprint
 from rich.tree import Tree
+import fitz
+from PIL import Image
+
 
 # specify the directory names
 INPUT_DIR = 'inputs'
@@ -30,11 +33,58 @@ PDF_COUNT = 0
 FAILED_PDF_COUNT = 0
 
 # Define the page sizes
-page_sizes = {
-    "A3": (1191, 842),
-    "A4": (842, 595),
-    "A5": (595, 421),
+PAGE_SIZES = {
+    "A3": {
+        "width": 842,
+        "height": 1191,
+    },
+    "A4": {
+        "width": 595,
+        "height": 842,
+    },
+    "A5": {
+        "width": 420,
+        "height": 595,
+    },
 }
+
+# functions
+
+"""Generate images from a PDF file and save them in the output folder."""
+def generateImages(pdf_name, output_folder):
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    doc = fitz.open(pdf_name)
+
+    for i, page in enumerate(doc):
+        image_name = f"page_{i+1}.jpg"
+        image_path = os.path.join(output_folder, image_name)
+        pix = page.get_pixmap()
+        pix._writeIMG(image_path, format=100)
+
+        # Open the image file with PIL
+        image = Image.open(image_path)
+
+        # Resize the image to A3 size (297 x 420 mm)
+        a3_size = (PAGE_SIZES["A3"]['width'], PAGE_SIZES["A3"]['height'])
+        image_a3 = image.resize(a3_size)
+        image_a3.save(os.path.join(output_folder, f"a3_{image_name}"))
+
+        # Resize the image to A4 size (210 x 297 mm)
+        a4_size = (PAGE_SIZES["A4"]['width'], PAGE_SIZES["A4"]['height'])
+        image_a4 = image.resize(a4_size)
+        image_a4.save(os.path.join(output_folder, f"a4_{image_name}"))
+
+        # Resize the image to A5 size (148 x 210 mm)
+        a5_size = (PAGE_SIZES["A5"]['width'], PAGE_SIZES["A5"]['height'])
+        image_a5 = image.resize(a5_size)
+        image_a5.save(os.path.join(output_folder, f"a5_{image_name}"))
+
+        # delete the original image
+        os.remove(image_path)
+
 
 rprint("[bold red]Script started...[/bold red]")
 
@@ -74,27 +124,13 @@ for pdf in pdfs:
             try:
                 pdf_writer = PdfWriter()
                 page = pdf_reader.pages[page_num]
-
-                for size_name, size in page_sizes.items():
-                    # Create a new page object with the correct size
-                    new_page = PyPDF2.pdf.PageObject.createBlankPage(
-                        size[0], size[1])
-                    new_page.mergeScaledTranslatedPage(page, scaleToFit=True)
-                    pdf_writer.add_page(new_page)
-                    output_filename = f"{pdf_name}_set-1_variant-{i+1}_{size_name}.pdf"
-                    output_path = os.path.join(output_dir, output_filename)
-                    with open(output_path, 'wb') as output_file:
-                        pdf_writer.write(output_file)
-                    PDF_COUNT += 1
-                    tree.add(f"Set of 1 variant - {page_num+1} ✅")
-
-                # pdf_writer.add_page(page)
-                # output_filename = f"{pdf_name}_set-1_variant-{i+1}.pdf"
-                # output_path = os.path.join(output_dir, output_filename)
-                # with open(output_path, 'wb') as output_file:
-                #     pdf_writer.write(output_file)
-                # PDF_COUNT += 1
-                # tree.add(f"Set of 1 variant - {page_num+1} ✅")
+                pdf_writer.add_page(page)
+                output_filename = f"{pdf_name}_set-1_variant-{i+1}.pdf"
+                output_path = os.path.join(output_dir, output_filename)
+                with open(output_path, 'wb') as output_file:
+                    pdf_writer.write(output_file)
+                PDF_COUNT += 1
+                tree.add(f"Set of 1 variant - {page_num+1} ✅")
 
             except:
                 FAILED_PDF_COUNT += 1
