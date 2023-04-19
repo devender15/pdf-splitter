@@ -126,9 +126,29 @@ for pdf in pdfs:
                 page = pdf_reader.pages[page_num]
                 pdf_writer.add_page(page)
                 output_filename = f"{pdf_name}_set-1_variant-{i+1}.pdf"
-                output_path = os.path.join(output_dir, output_filename)
-                with open(output_path, 'wb') as output_file:
+
+                # creating a folder of this variant
+                os.mkdir(os.path.join(output_dir, output_filename.split(".")[0]))
+
+                # saving this variant in this new folder
+                with open(os.path.join(output_dir, output_filename.split(".")[0], output_filename), 'wb') as output_file:
                     pdf_writer.write(output_file)
+
+                # create a folder named 'jpeg' inside this new folder
+                os.mkdir(os.path.join(output_dir, output_filename.split(".")[0], "jpg"))
+                os.mkdir(os.path.join(output_dir, output_filename.split(".")[0], "pdfs"))
+
+                tree.add(f"---> Generating images for {output_filename}...")
+                # generate images from this pdf
+                generateImages(os.path.join(output_dir, output_filename.split(".")[0], output_filename),
+                               os.path.join(output_dir, output_filename.split(".")[0], "jpg"))
+
+                # create a .zip file of the parent folder and delete the parent folder
+                tree.add(f"---> Creating a .zip file for {output_filename}...")
+                shutil.make_archive(os.path.join(output_dir, output_filename.split(".")[0]), 'zip', os.path.join(output_dir, output_filename.split(".")[0]))    
+
+                shutil.rmtree(os.path.join(output_dir, output_filename.split(".")[0]))
+
                 PDF_COUNT += 1
                 tree.add(f"Set of 1 variant - {page_num+1} ✅")
 
@@ -146,11 +166,29 @@ for pdf in pdfs:
                 for page_num in page_range:
                     pdf_writer.add_page(pdf_reader.pages[page_num])
                 # output_filename = f"{output_dir}/set-of-2-variant-{i+1}.pdf"
-                output_filename = f"_set-2_variant-{i+1}.pdf"
-                output_path = os.path.join(output_dir, output_filename)
+                output_filename = f"{pdf_name}_set-2_variant-{i+1}.pdf"
+                # output_path = os.path.join(output_dir, output_filename)
 
-                with open(output_path, 'wb') as output_file:
-                    pdf_writer.write(output_file)
+                # with open(output_path, 'wb') as output_file:
+                #     pdf_writer.write(output_file)
+
+                # creating a folder of this variant
+                os.mkdir(os.path.join(output_dir, output_filename.split(".")[0]))
+
+                # saving this variant in this new folder
+                # with open(os.path.join(output_dir, output_filename.split(".")[0], output_filename), 'wb') as output_file:
+                #     pdf_writer.write(output_file)
+
+                # # create a folder named 'jpeg' inside this new folder
+                # os.mkdir(os.path.join(output_dir, output_filename.split(".")[0], "jpg"))
+                # os.mkdir(os.path.join(output_dir, output_filename.split(".")[0], "pdfs"))
+
+                # tree.add(f"---> Generating images for {output_filename}...")
+                # # generate images from this pdf
+                # generateImages(os.path.join(output_dir, output_filename.split(".")[0], output_filename),
+                #                os.path.join(output_dir, output_filename.split(".")[0], "jpg"))
+
+
                 PDF_COUNT += 1
                 tree.add(f"Set of 2 variant - {i+1} ✅")
                 # rprint(f"[green][{pdf_name}] Generated {output_filename}[/green]")
@@ -159,6 +197,7 @@ for pdf in pdfs:
                 FAILED_PDF_COUNT += 1
                 # rprint("[bold red]Error:[/bold red] ", e, f" - {pdf_name} (Set of 2 variant - {page_num+1}")
                 tree.add(f"Set of 2 variant - {i+1} ❌")
+                rprint(e)
 
         # Split into combinations of 1
         for i, page_num in enumerate(range(num_pages)):
