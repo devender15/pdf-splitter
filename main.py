@@ -1,5 +1,4 @@
 import itertools
-import PyPDF2
 from PyPDF2 import PdfWriter, PdfReader
 import os
 import shutil
@@ -7,6 +6,7 @@ from rich import print as rprint
 from rich.tree import Tree
 import fitz
 from PIL import Image
+import pandas as pd
 
 
 # specify the directory names
@@ -31,6 +31,7 @@ pdfs = [pdf for pdf in os.listdir(INPUT_DIR + "/") if pdf.endswith(".pdf")]
 # initializing the counter for the total number of PDFs generated in the output folder
 PDF_COUNT = 0
 FAILED_PDF_COUNT = 0
+PDF_DATA = []
 
 # Define the page sizes
 PAGE_SIZES = {
@@ -116,16 +117,32 @@ def savePDF(output_dir, output_filename):
         output_dir, output_filename.split(".")[0]))
 
 
+def generateExcelSheet():
+    if(len(pdfs) > 1):
+        data = pd.DataFrame(data=PDF_DATA)
+    else:
+        data = pd.DataFrame(data=PDF_DATA, index=[0])
+    data.to_excel(os.path.join(OUTPUT_DIR, "pdf_names.xlsx"), index=False)
+
+
 rprint("[bold violet]Script started...[/bold violet]")
 
 for pdf in pdfs:
     pdf_path = os.path.join(INPUT_DIR, pdf)
     pdf_name = pdf.split(".")[0]
+    original_name = pdf_name
+    # reducing the pdf name
+    if len(pdf_name) > 53:
+        pdf_name = pdf_name[:53]
+
+    # saving the original and new name of pdf in PDF_DATA
+    PDF_DATA.append({'Original Name': original_name, 'Reduced Name': pdf_name})
+
     output_dir = os.path.join(OUTPUT_DIR, pdf_name)
 
-    tree = Tree(f"🔰 [bold green]{pdf_name}[/bold green]")
+    tree = Tree(f"🔰 [bold green]{original_name}[/bold green]")
 
-    rprint(f"[bold red]Processing {pdf_name}...[/bold red]")
+    rprint(f"[bold red]Processing {original_name}...[/bold red]")
 
     # setting output directory for each type of pdf
     os.mkdir(output_dir)
@@ -174,17 +191,14 @@ for pdf in pdfs:
                 pdf_writer = PdfWriter()
                 for page_num in page_range:
                     pdf_writer.add_page(pdf_reader.pages[page_num])
-                # output_filename = f"{output_dir}/set-of-2-variant-{i+1}.pdf"
                 output_filename = f"{pdf_name}_set-2_variant-{i+1}.pdf"
                 savePDF(output_dir, output_filename)
 
                 PDF_COUNT += 1
                 tree.add(f"Set of 2 variant - {i+1} ✅")
-                # rprint(f"[green][{pdf_name}] Generated {output_filename}[/green]")
 
-            except Exception as e:
+            except:
                 FAILED_PDF_COUNT += 1
-                # rprint("[bold red]Error:[/bold red] ", e, f" - {pdf_name} (Set of 2 variant - {page_num+1}")
                 tree.add(f"Set of 2 variant - {i+1} ❌")
 
         # Split into combinations of 1
@@ -199,7 +213,7 @@ for pdf in pdfs:
                 PDF_COUNT += 1
                 tree.add(f"Set of 1 variant - {page_num+1} ✅")
 
-            except Exception as e:
+            except:
                 FAILED_PDF_COUNT += 1
                 tree.add(f"Set of 1 variant - {page_num+1} ❌")
 
@@ -234,6 +248,9 @@ for pdf in pdfs:
 
     # Close the input PDF file
     pdf_file.close()
+
+    # saving the PDF_DATA in a csv file
+    generateExcelSheet()
 
 # showing the summary of the output
 rprint(
