@@ -7,6 +7,7 @@ from rich.tree import Tree
 import fitz
 from PIL import Image
 import pandas as pd
+import time
 
 
 # specify the directory names
@@ -32,6 +33,7 @@ pdfs = [pdf for pdf in os.listdir(INPUT_DIR + "/") if pdf.endswith(".pdf")]
 PDF_COUNT = 0
 FAILED_PDF_COUNT = 0
 PDF_DATA = []
+START_TIME = time.time()
 
 # Define the page sizes
 PAGE_SIZES = {
@@ -85,15 +87,26 @@ def generateImages(pdf_name, output_folder):
         # delete the original image
         os.remove(image_path)
 
+def saveResizedPdfs(pdf_name, output_folder, main_file_name):
+
+    for page_size in ["A3", "A4", "A5"]:
+
+        input_pdf = PdfReader(pdf_name)
+        output_pdf = PdfWriter()
+
+        for pdf_page_num in range(len(input_pdf.pages)):
+            input_page = input_pdf.pages[pdf_page_num]
+            input_page.scale_to(width=PAGE_SIZES[page_size]['width'], height=PAGE_SIZES[page_size]['height'])
+            output_pdf.add_page(input_page)
+        
+        # saving the pdf with the page size in the file name
+        output_filename = f"{page_size}_{main_file_name}"
+        output_pdf.write(os.path.join(output_folder, output_filename))
 
 def savePDF(output_dir, output_filename):
     # creating a folder of this variant
     os.mkdir(os.path.join(
         output_dir, output_filename.split(".")[0]))
-
-    # saving this variant in this new folder
-    with open(os.path.join(output_dir, output_filename.split(".")[0], output_filename), 'wb') as output_file:
-        pdf_writer.write(output_file)
 
     # create a folder named 'jpeg' inside this new folder
     os.mkdir(os.path.join(
@@ -101,6 +114,16 @@ def savePDF(output_dir, output_filename):
     os.mkdir(os.path.join(
         output_dir, output_filename.split(".")[0], "pdfs"))
 
+    # saving this variant in this new folder
+    with open(os.path.join(output_dir, output_filename.split(".")[0], output_filename), 'wb') as output_file:
+        pdf_writer.write(output_file)
+
+    tree.add(f"---> Saving PDFs of different sizes for {output_filename}...")
+
+    # read this pdf file and resize it to A3, A4 and A5 size and save it in the 'pdfs' folder
+    saveResizedPdfs(os.path.join(output_dir, output_filename.split(".")[0], output_filename), os.path.join(
+        output_dir, output_filename.split(".")[0], "pdfs"), output_filename)
+    
     tree.add(f"---> Generating images for {output_filename}...")
 
     # generate images from this pdf
@@ -116,7 +139,6 @@ def savePDF(output_dir, output_filename):
     shutil.rmtree(os.path.join(
         output_dir, output_filename.split(".")[0]))
 
-
 def generateExcelSheet():
     if(len(pdfs) > 1):
         data = pd.DataFrame(data=PDF_DATA)
@@ -124,6 +146,14 @@ def generateExcelSheet():
         data = pd.DataFrame(data=PDF_DATA, index=[0])
     data.to_excel(os.path.join(OUTPUT_DIR, "pdf_names.xlsx"), index=False)
 
+def formatTime(seconds):
+    seconds = round(seconds)
+    if seconds < 60:
+        return f"{seconds} seconds"
+    elif seconds < 3600:
+        return f"{seconds//60} minutes {seconds%60} seconds"
+    else:
+        return f"{seconds//3600} hours {(seconds%3600)//60} minutes {seconds%60} seconds"
 
 rprint("[bold violet]Script started...[/bold violet]")
 
@@ -135,6 +165,10 @@ for pdf in pdfs:
     if len(pdf_name) > 53:
         pdf_name = pdf_name[:53]
 
+    # remove whitespace from the end if exists
+    if pdf_name[-1] == " ":
+        pdf_name = pdf_name[:-1]
+
     # saving the original and new name of pdf in PDF_DATA
     PDF_DATA.append({'Original Name': original_name, 'Reduced Name': pdf_name})
 
@@ -142,7 +176,7 @@ for pdf in pdfs:
 
     tree = Tree(f"🔰 [bold green]{original_name}[/bold green]")
 
-    rprint(f"[bold red]Processing {original_name}...[/bold red]")
+    rprint(f"[bold red]Processing '{original_name}...[/bold red]'")
 
     # setting output directory for each type of pdf
     os.mkdir(output_dir)
@@ -178,9 +212,10 @@ for pdf in pdfs:
                 PDF_COUNT += 1
                 tree.add(f"Set of 1 variant - {page_num+1} ✅")
 
-            except:
+            except Exception as e:
                 FAILED_PDF_COUNT += 1
                 tree.add(f"Set of 1 variant - {page_num+1} ❌")
+                rprint(e)
 
     # Generate 3 PDF files with 1 page each for an input PDF file with 3 pages
     if num_pages == 3:
@@ -249,12 +284,18 @@ for pdf in pdfs:
     # Close the input PDF file
     pdf_file.close()
 
-    # saving the PDF_DATA in a csv file
-    generateExcelSheet()
+
+
+# saving the PDF_DATA in a csv file
+generateExcelSheet()
+
+# calculating the time taken to process the PDFs
+END_TIME = time.time()
 
 # showing the summary of the output
 rprint(
-    "-------------------------[bold red]Summary of the output-------------------------")
+    "-------------------------[bold blue]Summary of the output-------------------------")
+rprint(f"[dark_olive_green2]Time taken by script: {formatTime(END_TIME - START_TIME)}[/dark_olive_green2]")
 rprint(f"[dark_olive_green2]Input directory: {INPUT_DIR}[/dark_olive_green2]")
 rprint(
     f"[dark_olive_green2]Output directory: {OUTPUT_DIR}[/dark_olive_green2]")
