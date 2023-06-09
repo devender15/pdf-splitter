@@ -55,13 +55,17 @@ PAGE_SIZES = {
 
 # functions
 
+
 def generateUniqueId():
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+
 
 def generateImages(pdf_name, output_folder, output_filename):
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
+
+    unique_id = generateUniqueId()
 
     doc = fitz.open(pdf_name)
 
@@ -84,8 +88,12 @@ def generateImages(pdf_name, output_folder, output_filename):
         image_a4 = image.resize(a4_size)
         image_a4.save(os.path.join(output_folder, f"a4_{image_name}"))
 
+        separate_jpg_file_name = "a4_" + \
+            image_name.split(".")[0] + f"_ID_{unique_id}.jpg"
+
         # saving this a4 generated pdf to the outside of this folder by creating a folder with name of this folder
-        image_a4.save(os.path.join(output_folder, f"../../../A4/{output_filename[:-4]}", f"a4_{image_name}"))
+        image_a4.save(os.path.join(
+            output_folder, f"../../../A4/{output_filename[:-4]}", separate_jpg_file_name))
 
         # Resize the image to A5 size (148 x 210 mm)
         a5_size = (PAGE_SIZES["A5"]['width'], PAGE_SIZES["A5"]['height'])
@@ -143,9 +151,10 @@ def savePDF(output_dir, output_filename):
     # generate images from this pdf
     generateImages(os.path.join(output_dir, output_filename.split(".")[0], output_filename),
                    os.path.join(output_dir, output_filename.split(".")[0], f"jpg_ID_{id}"), output_filename)
-    
-    # finally delete the main pdf file 
-    os.remove(os.path.join(output_dir, output_filename.split(".")[0], output_filename))
+
+    # finally delete the main pdf file
+    os.remove(os.path.join(
+        output_dir, output_filename.split(".")[0], output_filename))
 
     tree.add(f"---> Creating a .zip file for {output_filename}...")
     # now create a .zip file of the parent folder and keep it in the same parent folder
@@ -166,7 +175,7 @@ def savePDF(output_dir, output_filename):
     # now move the zipped file to this new folder
     shutil.move(os.path.join(output_dir, output_filename.split(".")[0]+".zip"), os.path.join(
         output_dir, output_filename.split(".")[0] + "/"))
-    
+
 
 def generateExcelSheet():
     # rprint(PDF_DATA)
@@ -175,6 +184,7 @@ def generateExcelSheet():
     else:
         data = pd.DataFrame(data=PDF_DATA)
     data.to_excel(os.path.join(OUTPUT_DIR, "pdf_names.xlsx"), index=False)
+
 
 def formatTime(seconds):
     seconds = round(seconds)
@@ -193,8 +203,8 @@ for pdf in pdfs:
     pdf_name = pdf.split(".")[0]
     original_name = pdf_name
     # reducing the pdf name
-    if len(pdf_name) > 29:
-        pdf_name = pdf_name[:29]
+    if len(pdf_name) > 28:
+        pdf_name = pdf_name[:28]
 
     # remove whitespace from the end if exists
     if pdf_name[-1] == " ":
@@ -203,7 +213,7 @@ for pdf in pdfs:
     output_dir = os.path.join(OUTPUT_DIR, pdf_name)
 
     # creating A4 folder
-    if(not os.path.exists(os.path.join(OUTPUT_DIR, 'A4'))):
+    if (not os.path.exists(os.path.join(OUTPUT_DIR, 'A4'))):
         os.mkdir(os.path.join(OUTPUT_DIR, 'A4'))
 
     tree = Tree(f"🔰 [bold green]{original_name}[/bold green]")
@@ -229,6 +239,8 @@ for pdf in pdfs:
         os.mkdir(os.path.join(OUTPUT_DIR, 'A4', f"{pdf_name}_original"))
         # run same operation on the original file
         savePDF(output_dir, f"{pdf_name}_original.pdf")
+        PDF_DATA.append({'Original Name': original_name,
+                        'Reduced Name': f"{pdf_name}_original", 'Id': generateUniqueId()})
         tree.add(f"[sandy_brown]Original PDF ✅[/sandy_brown]")
 
     except:
@@ -253,14 +265,15 @@ for pdf in pdfs:
                 page.compress_content_streams()
                 pdf_writer.add_page(page)
                 output_filename = f"{pdf_name}_set-1_variant-{i+1}_ID_{file_id}.pdf"
+                reduced_name = f"{pdf_name}_set-1_variant-{i+1}.pdf"
 
                 # create a folder with name of pdf in A4 folder
                 os.mkdir(os.path.join(OUTPUT_DIR, 'A4', output_filename[:-4]))
-                
+
                 savePDF(output_dir, output_filename)
                 # saving the original and new name of pdf in PDF_DATA
-                PDF_DATA.append({'Original Name': original_name, 'Reduced Name': pdf_name, 'Id': file_id})
-
+                PDF_DATA.append({'Original Name': original_name,
+                                'Reduced Name': reduced_name, 'Id': file_id})
 
                 PDF_COUNT += 1
                 tree.add(f"Set of 1 variant - {page_num+1} ✅")
@@ -281,13 +294,15 @@ for pdf in pdfs:
                     pdf_writer.add_page(pdf_reader.pages[page_num])
                 file_id = generateUniqueId()
                 output_filename = f"{pdf_name}_set-2_variant-{i+1}_ID_{file_id}.pdf"
+                reduced_name = f"{pdf_name}_set-2_variant-{i+1}.pdf"
 
                 # create a folder with name of pdf in A4 folder
                 os.mkdir(os.path.join(OUTPUT_DIR, 'A4', output_filename[:-4]))
 
                 savePDF(output_dir, output_filename)
                 # saving the original and new name of pdf in PDF_DATA
-                PDF_DATA.append({'Original Name': original_name, 'Reduced Name': pdf_name, 'Id': file_id})
+                PDF_DATA.append({'Original Name': original_name,
+                                'Reduced Name': reduced_name, 'Id': file_id})
 
                 PDF_COUNT += 1
                 tree.add(f"Set of 2 variant - {i+1} ✅")
@@ -306,13 +321,15 @@ for pdf in pdfs:
                 page.compress_content_streams()
                 pdf_writer.add_page(page)
                 output_filename = f"{pdf_name}_set-1_variant-{i+1}_ID_{file_id}.pdf"
+                reduced_name = f"{pdf_name}_set-1_variant-{i+1}.pdf"
 
                 # create a folder with name of pdf in A4 folder
                 os.mkdir(os.path.join(OUTPUT_DIR, 'A4', output_filename[:-4]))
 
                 savePDF(output_dir, output_filename)
                 # saving the original and new name of pdf in PDF_DATA
-                PDF_DATA.append({'Original Name': original_name, 'Reduced Name': pdf_name, 'Id': file_id})
+                PDF_DATA.append({'Original Name': original_name,
+                                'Reduced Name': reduced_name, 'Id': file_id})
 
                 PDF_COUNT += 1
                 tree.add(f"Set of 1 variant - {page_num+1} ✅")
@@ -325,28 +342,26 @@ for pdf in pdfs:
     if num_pages == 6:
         for page_set in [3, 2, 1]:
 
-            page_combinations = []
-            for combination in itertools.combinations(range(num_pages), page_set):
-                page_combinations.append(combination)
+            page_ranges_set_six = itertools.combinations(
+                range(num_pages), page_set)
 
-            for i, combination in enumerate(page_combinations):
+            for i, page_range in enumerate(page_ranges_set_six):
                 try:
-                    # Create a new PDF writer and output file name
                     pdf_writer = PdfWriter()
+                    for page_num in page_range:
+                        pdf_writer.add_page(pdf_reader.pages[page_num])
+                    file_id = generateUniqueId()
+                    output_filename = f"{pdf_name}_set-{page_set}_variant-{i+1}_ID_{file_id}.pdf"
+                    reduced_name = f"{pdf_name}_set-{page_set}_variant-{i+1}.pdf"
 
-                    for page_num in combination:
-                        page = pdf_reader.pages[page_num]
-                        file_id = generateUniqueId()
-                        page.compress_content_streams()
-                        pdf_writer.add_page(page)
-                        output_filename = f"{pdf_name}_set-{page_set}_variant-{i+1}_ID_{file_id}.pdf"
+                    # create a folder with name of pdf in A4 folder
+                    os.mkdir(os.path.join(
+                        OUTPUT_DIR, 'A4', output_filename[:-4]))
 
-                        # create a folder with name of pdf in A4 folder
-                        os.mkdir(os.path.join(OUTPUT_DIR, 'A4', output_filename[:-4]))
-
-                        savePDF(output_dir, output_filename)
-                        # saving the original and new name of pdf in PDF_DATA
-                        PDF_DATA.append({'Original Name': original_name, 'Reduced Name': pdf_name, 'Id': file_id})
+                    savePDF(output_dir, output_filename)
+                    # saving the original and new name of pdf in PDF_DATA
+                    PDF_DATA.append(
+                        {'Original Name': original_name, 'Reduced Name': reduced_name, 'Id': file_id})
 
                     PDF_COUNT += 1
                     tree.add(f"Set of {page_set} variant - {i+1} ✅")
@@ -369,7 +384,7 @@ generateExcelSheet()
 # calculating the time taken to process the PDFs
 END_TIME = time.time()
 
-# final pdf generated count 
+# final pdf generated count
 PDF_COUNT *= 3
 
 # showing the summary of the output
@@ -382,7 +397,7 @@ rprint(
     f"[dark_olive_green2]Output directory: {OUTPUT_DIR}[/dark_olive_green2]")
 rprint(f"[dark_olive_green2]Total input PDFs: {len(pdfs)}[/dark_olive_green2]")
 rprint(
-    f"[dark_olive_green2]Total PDFs in output: {len(os.listdir(OUTPUT_DIR))}[/dark_olive_green2]")
+    f"[dark_olive_green2]Total PDFs in output: {len(os.listdir(OUTPUT_DIR)) - 2}[/dark_olive_green2]")
 rprint(
     f"[dark_olive_green2]Total PDFs generated: {PDF_COUNT}[/dark_olive_green2]")
 rprint(
