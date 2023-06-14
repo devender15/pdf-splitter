@@ -1,7 +1,9 @@
 /venv
 test.py
 /inputs
+/JPG
 /output
+/test
 *.docx
 *.pdf
 *.png

@@ -60,12 +60,10 @@ def generateUniqueId():
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
 
 
-def generateImages(pdf_name, output_folder, output_filename):
+def generateImages(pdf_name, output_folder, output_filename, main_id):
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-
-    unique_id = generateUniqueId()
 
     doc = fitz.open(pdf_name)
 
@@ -89,7 +87,7 @@ def generateImages(pdf_name, output_folder, output_filename):
         image_a4.save(os.path.join(output_folder, f"a4_{image_name}"))
 
         separate_jpg_file_name = "a4_" + \
-            image_name.split(".")[0] + f"_ID_{unique_id}.jpg"
+            image_name.split(".")[0] + f"_ID_{main_id}.jpg"
 
         # saving this a4 generated pdf to the outside of this folder by creating a folder with name of this folder
         image_a4.save(os.path.join(
@@ -122,9 +120,9 @@ def saveResizedPdfs(pdf_name, output_folder, main_file_name):
         output_pdf.write(os.path.join(output_folder, output_filename))
 
 
-def savePDF(output_dir, output_filename):
+def savePDF(output_dir, output_filename, main_id=None):
 
-    id = generateUniqueId()
+    main_id = '' if main_id is None else main_id
 
     # creating a folder of this variant
     os.mkdir(os.path.join(
@@ -132,9 +130,9 @@ def savePDF(output_dir, output_filename):
 
     # create a folder named 'jpeg' inside this new folder
     os.mkdir(os.path.join(
-        output_dir, output_filename.split(".")[0], f"jpg_ID_{id}"))
+        output_dir, output_filename.split(".")[0], f"jpg_ID_{main_id}"))
     os.mkdir(os.path.join(
-        output_dir, output_filename.split(".")[0], f"pdfs_ID_{id}"))
+        output_dir, output_filename.split(".")[0], f"pdfs_ID_{main_id}"))
 
     # saving this variant in this new folder
     with open(os.path.join(output_dir, output_filename.split(".")[0], output_filename), 'wb') as output_file:
@@ -144,13 +142,13 @@ def savePDF(output_dir, output_filename):
 
     # read this pdf file and resize it to A3, A4 and A5 size and save it in the 'pdfs' folder
     saveResizedPdfs(os.path.join(output_dir, output_filename.split(".")[0], output_filename), os.path.join(
-        output_dir, output_filename.split(".")[0], f"pdfs_ID_{id}"), output_filename)
+        output_dir, output_filename.split(".")[0], f"pdfs_ID_{main_id}"), output_filename)
 
     tree.add(f"---> Generating images for {output_filename}...")
 
     # generate images from this pdf
     generateImages(os.path.join(output_dir, output_filename.split(".")[0], output_filename),
-                   os.path.join(output_dir, output_filename.split(".")[0], f"jpg_ID_{id}"), output_filename)
+                   os.path.join(output_dir, output_filename.split(".")[0], f"jpg_ID_{main_id}"), output_filename, main_id)
 
     # finally delete the main pdf file
     os.remove(os.path.join(
@@ -270,7 +268,7 @@ for pdf in pdfs:
                 # create a folder with name of pdf in A4 folder
                 os.mkdir(os.path.join(OUTPUT_DIR, 'A4', output_filename[:-4]))
 
-                savePDF(output_dir, output_filename)
+                savePDF(output_dir, output_filename, file_id)
                 # saving the original and new name of pdf in PDF_DATA
                 PDF_DATA.append({'Original Name': original_name,
                                 'Reduced Name': reduced_name, 'Id': file_id})
@@ -299,7 +297,7 @@ for pdf in pdfs:
                 # create a folder with name of pdf in A4 folder
                 os.mkdir(os.path.join(OUTPUT_DIR, 'A4', output_filename[:-4]))
 
-                savePDF(output_dir, output_filename)
+                savePDF(output_dir, output_filename, file_id)
                 # saving the original and new name of pdf in PDF_DATA
                 PDF_DATA.append({'Original Name': original_name,
                                 'Reduced Name': reduced_name, 'Id': file_id})
@@ -326,7 +324,7 @@ for pdf in pdfs:
                 # create a folder with name of pdf in A4 folder
                 os.mkdir(os.path.join(OUTPUT_DIR, 'A4', output_filename[:-4]))
 
-                savePDF(output_dir, output_filename)
+                savePDF(output_dir, output_filename, file_id)
                 # saving the original and new name of pdf in PDF_DATA
                 PDF_DATA.append({'Original Name': original_name,
                                 'Reduced Name': reduced_name, 'Id': file_id})
@@ -358,7 +356,7 @@ for pdf in pdfs:
                     os.mkdir(os.path.join(
                         OUTPUT_DIR, 'A4', output_filename[:-4]))
 
-                    savePDF(output_dir, output_filename)
+                    savePDF(output_dir, output_filename, file_id)
                     # saving the original and new name of pdf in PDF_DATA
                     PDF_DATA.append(
                         {'Original Name': original_name, 'Reduced Name': reduced_name, 'Id': file_id})
