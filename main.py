@@ -233,12 +233,15 @@ for pdf in pdfs:
         for page in pdf_reader.pages:
             pdf_writer.add_page(page)
 
+        file_id = generateUniqueId()
+        output_filename = f"{pdf_name}_original_ID_{file_id}.pdf"
+
         # create a folder with name of pdf in A4 folder
-        os.mkdir(os.path.join(OUTPUT_DIR, 'A4', f"{pdf_name}_original"))
+        os.mkdir(os.path.join(OUTPUT_DIR, 'A4', output_filename[:-4]))
         # run same operation on the original file
-        savePDF(output_dir, f"{pdf_name}_original.pdf")
+        savePDF(output_dir, output_filename, file_id)
         PDF_DATA.append({'Original Name': original_name,
-                        'Reduced Name': f"{pdf_name}_original", 'Id': generateUniqueId()})
+                        'Reduced Name': f"{pdf_name}_original_{file_id}", 'Id': file_id})
         tree.add(f"[sandy_brown]Original PDF ✅[/sandy_brown]")
 
     except:
